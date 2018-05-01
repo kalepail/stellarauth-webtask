@@ -40,11 +40,11 @@ app.post(/^\/(test|public)$/, (req, res) => {
 
     const secret = await decrypt(stellar, secrets.CRYPTO_DATAKEY);
     const sourceKeys = StellarSdk.Keypair.fromSecret(secret);
-    transaction.sign(sourceKeys);
 
-    return server.submitTransaction(transaction)
-    .then((result) => res.json(result));
+    transaction.sign(sourceKeys);
+    return server.submitTransaction(transaction);
   })
+  .then((result) => res.json(result))
   .catch((err) => {
     res.status(err.status || 500);
     res.json({error: {message: err.message}});
