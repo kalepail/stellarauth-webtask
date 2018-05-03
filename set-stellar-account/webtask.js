@@ -29,6 +29,7 @@ app.post('/', async function (req, res) {
     return user.app_metadata ? user.app_metadata.stellar : null;
   })
   .catch((err) => {
+    console.error(err);
     res.status(err.status || 500);
     res.json({error: {message: err.message}});
   });
@@ -53,6 +54,7 @@ app.post('/', async function (req, res) {
     res.json({publicKey: stellar.publicKey});
   })
   .catch((err) => {
+    console.error(err);
     res.status(err.status || 500);
     res.json({error: {message: err.message}});
   });

@@ -2,6 +2,7 @@ import Express from 'express';
 import wt from 'webtask-tools';
 import StellarSdk from 'stellar-sdk';
 import { ManagementClient } from 'auth0';
+import _ from 'lodash';
 
 const app = new Express();
 
@@ -10,7 +11,9 @@ app.post(/^\/(test|public)$/, async (req, res) => {
   let stellar = req.user['https://colorglyph.io'] ? req.user['https://colorglyph.io'].stellar : null;
 
   const secrets = req.webtaskContext.secrets;
-  const sourceKeys = StellarSdk.Keypair.fromSecret(secrets.STELLAR_SECRET);
+  const masterFundAccount = StellarSdk.Keypair.fromSecret(secrets.MASTER_FUND_SECRET);
+  const masterFeeAccount = StellarSdk.Keypair.fromSecret(secrets.MASTER_FEE_SECRET);
+  const masterSignerAccounts = _.map(secrets.MASTER_SIGNER_SECRETS.split(','), (secret) => StellarSdk.Keypair.fromSecret(secret));
 
   if (req.url === '/public') {
     StellarSdk.Network.usePublicNetwork();
@@ -30,6 +33,7 @@ app.post(/^\/(test|public)$/, async (req, res) => {
     stellar = await management.getUser({id: req.user.sub})
     .then((user) => user.app_metadata ? user.app_metadata.stellar : null)
     .catch((err) => {
+      console.error(err);
       res.status(err.status || 500);
       res.json({error: {message: err.message}});
     });
@@ -42,21 +46,23 @@ app.post(/^\/(test|public)$/, async (req, res) => {
   }
 
   server.loadAccount(stellar.publicKey)
-  .then(() => server.loadAccount(sourceKeys.publicKey()))
+  .then(() => server.loadAccount(masterFeeAccount.publicKey()))
   .then((sourceAccount) => {
     const transaction = new StellarSdk.TransactionBuilder(sourceAccount)
     .addOperation(StellarSdk.Operation.payment({
       destination: stellar.publicKey,
       asset: StellarSdk.Asset.native(),
-      amount: '10'
+      amount: '10',
+      source: masterFundAccount.publicKey()
     }))
     .build();
 
-    transaction.sign(sourceKeys);
+    transaction.sign(masterFeeAccount, masterFundAccount, ..._.sampleSize(masterSignerAccounts, 2));
     return server.submitTransaction(transaction);
   })
   .then((result) => res.json(result))
   .catch((err) => {
+    console.error(err);
     res.status(err.status || 500);
     res.json({error: {message: err.message}});
   });
