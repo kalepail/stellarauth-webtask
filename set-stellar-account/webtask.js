@@ -6,9 +6,7 @@ import { encrypt } from '../crypt';
 
 const app = new Express();
 
-app.post('/', async function (req, res) {
-  const secrets = req.webtaskContext.secrets;
-
+app.post('/', (req, res) => {
   let user = req.user;
   let stellar = user['https://colorglyph.io'] ? user['https://colorglyph.io'].stellar : null;
 
@@ -17,42 +15,34 @@ app.post('/', async function (req, res) {
     return;
   }
 
+  const secrets = req.webtaskContext.secrets;
   const management = new ManagementClient({
     domain: secrets.AUTH0_DOMAIN,
     clientId: secrets.AUTH0_CLIENT_ID,
     clientSecret: secrets.AUTH0_CLIENT_SECRET
   });
 
-  stellar = await management.getUser({id: user.sub})
+  management.getUser({id: user.sub})
   .then((user) => {
     user = user;
-    return user.app_metadata ? user.app_metadata.stellar : null;
+    return user.app_metadata ? user.app_metadata.stellar : null
   })
-  .catch((err) => {
-    console.error(err);
-    res.status(err.status || 500);
-    res.json({error: {message: err.message}});
-  });
+  .then(async (stellar) => {
+    if (stellar)
+      return {publicKey: stellar.publicKey};
 
-  if (stellar) {
-    res.json({publicKey: stellar.publicKey});
-    return;
-  }
+    const keypair = Stellar.Keypair.random();
+    stellar = {
+      ...await encrypt(keypair.secret(), secrets.CRYPTO_DATAKEY),
+      publicKey: keypair.publicKey(),
+    }
 
-  const keypair = Stellar.Keypair.random();
-
-  stellar = {
-    ...await encrypt(keypair.secret(), secrets.CRYPTO_DATAKEY),
-    publicKey: keypair.publicKey(),
-  }
-
-  management.updateAppMetadata({id: user.sub}, {
-    ...user.app_metadata,
-    stellar
+    return management.updateAppMetadata({id: user.sub}, {
+      ...user.app_metadata,
+      stellar
+    }).then(() => ({publicKey: stellar.publicKey}));
   })
-  .then((result) => {
-    res.json({publicKey: stellar.publicKey});
-  })
+  .then((result) => res.json(result))
   .catch((err) => {
     console.error(err);
     res.status(err.status || 500);

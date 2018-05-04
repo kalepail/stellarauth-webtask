@@ -7,7 +7,7 @@ import { decrypt } from '../crypt';
 
 const app = new Express();
 
-app.post(/^\/(test|public)$/, async (req, res) => {
+app.post(/^\/(test|public)$/, (req, res) => {
   let server;
   let transaction;
   let stellarAccount;
@@ -31,7 +31,7 @@ app.post(/^\/(test|public)$/, async (req, res) => {
     clientSecret: secrets.AUTH0_CLIENT_SECRET
   });
 
-  const stellar = await management.getUser({id: req.user.sub})
+  management.getUser({id: req.user.sub})
   .then((user) => user.app_metadata ? user.app_metadata.stellar : null)
   .then(async (stellar) => {
     if (!stellar)
