@@ -21,16 +21,14 @@ app.post(/^\/(test|public)$/, (req, res) => {
     server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
   }
 
-  const user = req.user;
   const secrets = req.webtaskContext.secrets;
-  const transaction = new StellarSdk.Transaction(req.body.xdr);
   const management = new ManagementClient({
     domain: secrets.AUTH0_DOMAIN,
     clientId: secrets.AUTH0_CLIENT_ID,
     clientSecret: secrets.AUTH0_CLIENT_SECRET
   });
 
-  management.getUser({id: user.sub})
+  management.getUser({id: req.user.sub})
   .then((user) => user.app_metadata ? user.app_metadata.stellar : null)
   .then(async (stellar) => {
     if (!stellar)
@@ -43,6 +41,7 @@ app.post(/^\/(test|public)$/, (req, res) => {
     const sourceKeys = StellarSdk.Keypair.fromSecret(secret);
     const masterFeeAccount = StellarSdk.Keypair.fromSecret(secrets.MASTER_FEE_SECRET);
     const childSignerAccounts = _.map(secrets.CHILD_SIGNER_SECRETS.split(','), (secret) => StellarSdk.Keypair.fromSecret(secret));
+    const transaction = new StellarSdk.Transaction(req.body.xdr);
 
     transaction.sign(sourceKeys, masterFeeAccount, ..._.sampleSize(childSignerAccounts, 1));
     return server.submitTransaction(transaction);

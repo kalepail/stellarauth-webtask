@@ -10,13 +10,7 @@ const app = new Express();
 app.post(/^\/(test|public)$/, async (req, res) => {
   let server;
   let transaction;
-  let stellar = req.user['https://colorglyph.io'] ? req.user['https://colorglyph.io'].stellar : null;
-
-  const secrets = req.webtaskContext.secrets;
-  const masterFundPublic = secrets.MASTER_FUND_PUBLIC;
-  const masterFeeAccount = StellarSdk.Keypair.fromSecret(secrets.MASTER_FEE_SECRET);
-  const masterSignerAccounts = _.map(secrets.MASTER_SIGNER_SECRETS.split(','), (secret) => StellarSdk.Keypair.fromSecret(secret));
-  const childSignerPublicKeys = secrets.CHILD_SIGNER_PUBLIC_KEYS.split(',');
+  let stellarAccount;
 
   if (req.url === '/public') {
     StellarSdk.Network.usePublicNetwork();
@@ -26,32 +20,31 @@ app.post(/^\/(test|public)$/, async (req, res) => {
     server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
   }
 
-  if (!stellar.secret) {
-    const management = new ManagementClient({
-      domain: secrets.AUTH0_DOMAIN,
-      clientId: secrets.AUTH0_CLIENT_ID,
-      clientSecret: secrets.AUTH0_CLIENT_SECRET
-    });
+  const secrets = req.webtaskContext.secrets;
+  const masterFundPublic = secrets.MASTER_FUND_PUBLIC;
+  const masterFeeAccount = StellarSdk.Keypair.fromSecret(secrets.MASTER_FEE_SECRET);
+  const masterSignerAccounts = _.map(secrets.MASTER_SIGNER_SECRETS.split(','), (secret) => StellarSdk.Keypair.fromSecret(secret));
+  const childSignerPublicKeys = secrets.CHILD_SIGNER_PUBLIC_KEYS.split(',');
+  const management = new ManagementClient({
+    domain: secrets.AUTH0_DOMAIN,
+    clientId: secrets.AUTH0_CLIENT_ID,
+    clientSecret: secrets.AUTH0_CLIENT_SECRET
+  });
 
-    stellar = await management.getUser({id: req.user.sub})
-    .then((user) => user.app_metadata ? user.app_metadata.stellar : null)
-    .catch((err) => {
-      console.error(err);
-      res.status(err.status || 500);
-      res.json({error: {message: err.message}});
-    });
-  }
+  const stellar = await management.getUser({id: req.user.sub})
+  .then((user) => user.app_metadata ? user.app_metadata.stellar : null)
+  .then(async (stellar) => {
+    if (!stellar)
+      throw {
+        status: 404,
+        message: 'Auth0 user Stellar account could not be found'
+      }
 
-  if (!stellar.secret) {
-    res.status(404);
-    res.json({error: {message: 'Auth0 user Stellar account could not be found'}});
-    return;
-  }
+    const secret = await decrypt(stellar, secrets.CRYPTO_DATAKEY);
+    stellarAccount = StellarSdk.Keypair.fromSecret(secret);
 
-  const secret = await decrypt(stellar, secrets.CRYPTO_DATAKEY);
-  const stellarAccount = StellarSdk.Keypair.fromSecret(secret);
-
-  server.loadAccount(stellarAccount.publicKey()) // Check if account has already been created
+    return server.loadAccount(stellarAccount.publicKey()); // Check if account has already been created
+  })
   .then(() => {
     throw { // If so throw that error
       status: 409,

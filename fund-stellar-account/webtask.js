@@ -10,11 +10,6 @@ app.post(/^\/(test|public)$/, async (req, res) => {
   let server;
   let stellar = req.user['https://colorglyph.io'] ? req.user['https://colorglyph.io'].stellar : null;
 
-  const secrets = req.webtaskContext.secrets;
-  const masterFundAccount = StellarSdk.Keypair.fromSecret(secrets.MASTER_FUND_SECRET);
-  const masterFeeAccount = StellarSdk.Keypair.fromSecret(secrets.MASTER_FEE_SECRET);
-  const masterSignerAccounts = _.map(secrets.MASTER_SIGNER_SECRETS.split(','), (secret) => StellarSdk.Keypair.fromSecret(secret));
-
   if (req.url === '/public') {
     StellarSdk.Network.usePublicNetwork();
     server = new StellarSdk.Server('https://horizon.stellar.org');
@@ -22,6 +17,11 @@ app.post(/^\/(test|public)$/, async (req, res) => {
     StellarSdk.Network.useTestNetwork();
     server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
   }
+
+  const secrets = req.webtaskContext.secrets;
+  const masterFundAccount = StellarSdk.Keypair.fromSecret(secrets.MASTER_FUND_SECRET);
+  const masterFeeAccount = StellarSdk.Keypair.fromSecret(secrets.MASTER_FEE_SECRET);
+  const masterSignerAccounts = _.map(secrets.MASTER_SIGNER_SECRETS.split(','), (secret) => StellarSdk.Keypair.fromSecret(secret));
 
   if (!stellar) {
     const management = new ManagementClient({
