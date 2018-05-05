@@ -32,11 +32,7 @@ app.post(/^\/(test|public)$/, async (req, res) => {
 
     stellar = await management.getUser({id: req.user.sub})
     .then((user) => user.app_metadata ? user.app_metadata.stellar : null)
-    .catch((err) => {
-      console.error(err);
-      res.status(err.status || 500);
-      res.json({error: {message: err.message}});
-    });
+    .catch(() => false);
   }
 
   if (!stellar) {

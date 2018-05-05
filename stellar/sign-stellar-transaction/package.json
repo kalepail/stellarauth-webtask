@@ -5,6 +5,7 @@
   "dependencies": {
     "arraybuffer-to-string": "^1.0.2",
     "auth0": "^2.9.1",
+    "axios": "^0.18.0",
     "base64-arraybuffer": "^0.1.5",
     "body-parser": "^1.18.2",
     "crypto": "^1.0.1",

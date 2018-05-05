@@ -25,7 +25,7 @@ app.post('/', (req, res) => {
   management.getUser({id: user.sub})
   .then((user) => {
     user = user;
-    return user.app_metadata ? user.app_metadata.stellar : null
+    return user.app_metadata ? user.app_metadata.stellar : null;
   })
   .then(async (stellar) => {
     if (stellar)
@@ -44,9 +44,15 @@ app.post('/', (req, res) => {
   })
   .then((result) => res.json(result))
   .catch((err) => {
+    if (err.response)
+      err = err.response;
+
+    if (err.data)
+      err = err.data;
+
     console.error(err);
     res.status(err.status || 500);
-    res.json({error: {message: err.message}});
+    res.json(err);
   });
 });
 
