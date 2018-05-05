@@ -10,7 +10,7 @@ app.use(bodyParser.json());
 
 app.post('/', async (req, res) => {
   const secrets = req.webtaskContext.secrets;
-  let authy; // = req.user['https://colorglyph.io'] ? req.user['https://colorglyph.io'].authy : null;
+  let authy = req.user['https://colorglyph.io'] ? req.user['https://colorglyph.io'].authy : null;
 
   if (!authy) {
     const management = new ManagementClient({
