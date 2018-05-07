@@ -30,7 +30,7 @@ app.post('/', async (req, res) => {
     return;
   }
 
-  axios.get(`https://api.authy.com/protected/json/users/${authy}/status`, {
+  axios.get(`https://api.authy.com/protected/json/users/${authy.id}/status`, {
     headers: {'X-Authy-API-Key': secrets.AUTHY_API_KEY}
   })
   .then(({data: {status}}) => res.json(status))

@@ -30,7 +30,13 @@ app.post('/', async (req, res) => {
     return;
   }
 
-  axios.post(`https://api.authy.com/protected/json/users/${authy}/secret`, {
+  if (!authy.verified) {
+    res.status(400);
+    res.json({error: {message: 'Authy account has not been verified'}});
+    return;
+  }
+
+  axios.post(`https://api.authy.com/protected/json/users/${authy.id}/secret`, {
     label: 'Colorglyph',
     qr_size: 320
   }, {

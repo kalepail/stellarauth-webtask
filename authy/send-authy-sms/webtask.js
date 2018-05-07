@@ -30,7 +30,7 @@ app.post('/', async (req, res) => {
     return;
   }
 
-  axios.get(`https://api.authy.com/protected/json/sms/${authy}`, {
+  axios.get(`https://api.authy.com/protected/json/sms/${authy.id}`, {
     params: {
       force: true
     },

@@ -57,10 +57,10 @@ app.post('/', (req, res) => {
       });
     })
     .then(({data: {user: {id}}}) => {
-      authy = id;
+      authy = {id};
 
       return management.updateAppMetadata({id: user.sub}, {authy})
-      .then(() => ({authy}));
+      .then(() => authy);
     });
   })
   .then((result) => res.json(result))
