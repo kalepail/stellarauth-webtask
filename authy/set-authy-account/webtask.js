@@ -59,9 +59,23 @@ app.post('/', (req, res) => {
     .then(({data: {user: {id}}}) => {
       authy = {id};
 
+      return management.getUsers({
+        include_totals: true,
+        search_engine: 'v3',
+        q: `app_metadata.authy.id:${id}`,
+        fields: 'user_id'
+      });
+    })
+    .then((response) => {
+      if (response.total)
+        throw {
+          status: 400,
+          message: `Authy user with this id already exists`
+        }
+
       return management.updateAppMetadata({id: user.sub}, {authy})
       .then(() => authy);
-    });
+    })
   })
   .then((result) => res.json(result))
   .catch((err) => {
