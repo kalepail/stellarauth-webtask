@@ -13,6 +13,7 @@ app.use(bodyParser.json());
 
 app.post(/^\/(test|public)$/, (req, res) => {
   let server;
+  let stellar;
 
   if (req.url === '/public') {
     StellarSdk.Network.usePublicNetwork();
@@ -37,8 +38,8 @@ app.post(/^\/(test|public)$/, (req, res) => {
     });
 
     return management.getUser({id: req.user.sub})
-    .then((user) => user.app_metadata)
-    .then(async ({stellar}) => {
+    .then((user) => stellar = user.app_metadata ? user.app_metadata.stellar : null)
+    .then(async () => {
       if (!stellar)
         throw {
           status: 404,
@@ -47,15 +48,16 @@ app.post(/^\/(test|public)$/, (req, res) => {
 
       const childSecret = await decrypt(stellar.childSecret, stellar.childNonce, secrets.CRYPTO_DATAKEY);
       const childAccount = StellarSdk.Keypair.fromSecret(childSecret);
+      const feeSecret = await decrypt(stellar.feeSecret, stellar.feeNonce, secrets.CRYPTO_DATAKEY);
+      const feeAccount = StellarSdk.Keypair.fromSecret(feeSecret);
 
-      const childSignerAccounts = _.map(secrets.CHILD_SIGNER_SECRETS.split(','), (secret) => StellarSdk.Keypair.fromSecret(secret));
       const transaction = new StellarSdk.Transaction(req.body.xdr);
 
-      transaction.sign(childAccount, ..._.sampleSize(childSignerAccounts, 1));
-      return {result: server.submitTransaction(transaction), stellar}
+      transaction.sign(childAccount, feeAccount);
+      return server.submitTransaction(transaction);
     });
   })
-  .then(({result, stellar}) => {
+  .then((result) => {
     res.json(result); // Send response
 
     // Check this child's fee account balance
