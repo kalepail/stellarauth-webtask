@@ -71,12 +71,20 @@ app.post(/^\/(test|public)$/, (req, res) => {
     }));
 
     transaction = transaction.addOperation(StellarSdk.Operation.setOptions({
+      signer: {
+        ed25519PublicKey: _.sample(masterSignerAccounts).publicKey(),
+        weight: 1
+      },
+      source: childAccount.publicKey()
+    }));
+
+    transaction = transaction.addOperation(StellarSdk.Operation.setOptions({
       inflationDest: masterFundAccount.publicKey(),
       setFlags: 3,
       masterWeight: 1,
       lowThreshold: 2,
       medThreshold: 2,
-      highThreshold: 2,
+      highThreshold: 3,
       homeDomain: 'colorglyph.io',
       signer: {
         ed25519PublicKey: feeAccount.publicKey(),
@@ -94,12 +102,20 @@ app.post(/^\/(test|public)$/, (req, res) => {
     }));
 
     transaction = transaction.addOperation(StellarSdk.Operation.setOptions({
+      signer: {
+        ed25519PublicKey: _.sample(masterSignerAccounts).publicKey(),
+        weight: 1
+      },
+      source: feeAccount.publicKey()
+    }));
+
+    transaction = transaction.addOperation(StellarSdk.Operation.setOptions({
       inflationDest: masterFundAccount.publicKey(),
       setFlags: 3,
       masterWeight: 1,
       lowThreshold: 2,
       medThreshold: 2,
-      highThreshold: 2,
+      highThreshold: 3,
       homeDomain: 'colorglyph.io',
       signer: {
         ed25519PublicKey: childAccount.publicKey(),
