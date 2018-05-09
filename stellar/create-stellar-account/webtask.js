@@ -122,7 +122,7 @@ app.post(/^\/(test|public)$/, (req, res) => {
       homeDomain: 'colorglyph.io',
       signer: {
         ed25519PublicKey: childAccount.publicKey(),
-        weight: 2
+        weight: 1
       },
       source: feeAccount.publicKey()
     }));
