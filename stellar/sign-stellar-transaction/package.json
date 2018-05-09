@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "dev": "wt create webtask.js -n sign-stellar-transaction -p colorglyph --secrets-file .secrets --bundle -w",
     "deploy": "wt create webtask.js -n sign-stellar-transaction -p colorglyph --secrets-file .secrets --bundle --bundle-minify"
   },
   "dependencies": {

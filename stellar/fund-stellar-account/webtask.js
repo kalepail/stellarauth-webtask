@@ -20,7 +20,6 @@ app.post(/^\/(test|public)$/, async (req, res) => {
 
   const secrets = req.webtaskContext.secrets;
   const masterFundAccount = StellarSdk.Keypair.fromSecret(secrets.MASTER_FUND_SECRET);
-  const masterFeeAccount = StellarSdk.Keypair.fromSecret(secrets.MASTER_FEE_SECRET);
   const masterSignerAccounts = _.map(secrets.MASTER_SIGNER_SECRETS.split(','), (secret) => StellarSdk.Keypair.fromSecret(secret));
 
   if (!stellar) {
@@ -41,19 +40,18 @@ app.post(/^\/(test|public)$/, async (req, res) => {
     return;
   }
 
-  server.loadAccount(stellar.publicKey)
-  .then(() => server.loadAccount(masterFeeAccount.publicKey()))
+  server.loadAccount(stellar.childKey)
+  .then(() => server.loadAccount(masterFundAccount.publicKey()))
   .then((sourceAccount) => {
     const transaction = new StellarSdk.TransactionBuilder(sourceAccount)
     .addOperation(StellarSdk.Operation.payment({
-      destination: stellar.publicKey,
+      destination: stellar.childKey,
       asset: StellarSdk.Asset.native(),
-      amount: '10',
-      source: masterFundAccount.publicKey()
+      amount: '5'
     }))
     .build();
 
-    transaction.sign(masterFeeAccount, masterFundAccount, ..._.sampleSize(masterSignerAccounts, 2));
+    transaction.sign(masterFundAccount, ..._.sampleSize(masterSignerAccounts, 2));
     return server.submitTransaction(transaction);
   })
   .then((result) => res.json(result))

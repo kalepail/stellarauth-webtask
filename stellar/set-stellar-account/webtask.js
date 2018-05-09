@@ -10,7 +10,7 @@ app.post('/', (req, res) => {
   let stellar = req.user['https://colorglyph.io'] ? req.user['https://colorglyph.io'].stellar : null;
 
   if (stellar) {
-    res.json({publicKey: stellar.publicKey});
+    res.json({childKey: stellar.childKey});
     return;
   }
 
@@ -25,16 +25,24 @@ app.post('/', (req, res) => {
   .then((user) => user.app_metadata ? user.app_metadata.stellar : null)
   .then(async (stellar) => {
     if (stellar)
-      return {publicKey: stellar.publicKey};
+      return {childKey: stellar.childKey};
 
-    const keypair = Stellar.Keypair.random();
+    const childPair = Stellar.Keypair.random();
+    const feePair = Stellar.Keypair.random();
+    const {secret: childSecret, nonce: childNonce} = await encrypt(childPair.secret(), secrets.CRYPTO_DATAKEY);
+    const {secret: feeSecret, nonce: feeNonce} = await encrypt(feePair.secret(), secrets.CRYPTO_DATAKEY);
+
     stellar = {
-      ...await encrypt(keypair.secret(), secrets.CRYPTO_DATAKEY),
-      publicKey: keypair.publicKey(),
+      childSecret,
+      childNonce,
+      childKey: childPair.publicKey(),
+      feeSecret,
+      feeNonce,
+      feeKey: feePair.publicKey(),
     }
 
     return management.updateAppMetadata({id: req.user.sub}, {stellar})
-    .then(() => ({publicKey: stellar.publicKey}));
+    .then(() => ({childKey: stellar.childKey}));
   })
   .then((result) => res.json(result))
   .catch((err) => {

@@ -17,10 +17,10 @@ export async function encrypt(secret, encoded_dataKey) {
   }
 }
 
-export async function decrypt(stellar, encoded_dataKey) {
-  const cipherText = new Uint8Array(decode(stellar.secret));
+export async function decrypt(secret, nonce, encoded_dataKey) {
+  const cipherText = new Uint8Array(decode(secret));
   const dataKey = new Uint8Array(decode(encoded_dataKey));
-  const nonce = new Uint8Array(decode(stellar.nonce));
+  nonce = new Uint8Array(decode(nonce));
 
   let encryptor = await miscreant.AEAD.importKey(dataKey, 'AES-PMAC-SIV', new miscreant.PolyfillCryptoProvider());
   let stringBuffer = await encryptor.open(cipherText, nonce);
