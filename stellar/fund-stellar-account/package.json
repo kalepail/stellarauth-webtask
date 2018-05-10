@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "deploy": "wt create webtask.js -n create-stellar-account -p colorglyph --secrets-file .secrets --bundle --bundle-minify"
+    "dev": "wt create webtask.js -n fund-stellar-account -p colorglyph --secrets-file .secrets --bundle -w",
+    "deploy": "wt create webtask.js -n fund-stellar-account -p colorglyph --secrets-file .secrets --bundle --bundle-minify"
   },
   "dependencies": {
     "arraybuffer-to-string": "^1.0.2",
