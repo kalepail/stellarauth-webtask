@@ -27,18 +27,18 @@ app.post('/', (req, res) => {
     if (stellar)
       return {childKey: stellar.childKey};
 
-    const childPair = Stellar.Keypair.random();
-    const feePair = Stellar.Keypair.random();
-    const {secret: childSecret, nonce: childNonce} = await encrypt(childPair.secret(), secrets.CRYPTO_DATAKEY);
-    const {secret: feeSecret, nonce: feeNonce} = await encrypt(feePair.secret(), secrets.CRYPTO_DATAKEY);
+    const childAccount = Stellar.Keypair.random();
+    const feeAccount = Stellar.Keypair.random();
+    const {secret: childSecret, nonce: childNonce} = await encrypt(childAccount.secret(), secrets.CRYPTO_DATAKEY);
+    const {secret: feeSecret, nonce: feeNonce} = await encrypt(feeAccount.secret(), secrets.CRYPTO_DATAKEY);
 
     stellar = {
       childSecret,
       childNonce,
-      childKey: childPair.publicKey(),
+      childKey: childAccount.publicKey(),
       feeSecret,
       feeNonce,
-      feeKey: feePair.publicKey(),
+      feeKey: feeAccount.publicKey(),
     }
 
     return management.updateAppMetadata({id: req.user.sub}, {stellar})

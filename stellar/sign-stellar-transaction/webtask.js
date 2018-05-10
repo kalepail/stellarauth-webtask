@@ -48,12 +48,10 @@ app.post(/^\/(test|public)$/, (req, res) => {
 
       const childSecret = await decrypt(stellar.childSecret, stellar.childNonce, secrets.CRYPTO_DATAKEY);
       const childAccount = StellarSdk.Keypair.fromSecret(childSecret);
-      const feeSecret = await decrypt(stellar.feeSecret, stellar.feeNonce, secrets.CRYPTO_DATAKEY);
-      const feeAccount = StellarSdk.Keypair.fromSecret(feeSecret);
 
       const transaction = new StellarSdk.Transaction(req.body.xdr);
 
-      transaction.sign(childAccount, feeAccount);
+      transaction.sign(childAccount);
       return server.submitTransaction(transaction);
     });
   })
@@ -61,11 +59,12 @@ app.post(/^\/(test|public)$/, (req, res) => {
     res.json(result); // Send response
 
     // Check this child's fee account balance
+    // TODO: Move this out into its own refill Webtask
     server.loadAccount(stellar.feeKey)
     .then((result) => {
       const native = _.find(result.balances, {asset_type: 'native'});
 
-      if (native.balance < 5) { // If it's below 5 refill with 1 XLM
+      if (native.balance < 2.1) { // If it's below threshold refill with 0.1 XLM
         const masterFundAccount = StellarSdk.Keypair.fromSecret(secrets.MASTER_FUND_SECRET);
         const masterSignerAccounts = _.map(secrets.MASTER_SIGNER_SECRETS.split(','), (secret) => StellarSdk.Keypair.fromSecret(secret));
 
@@ -75,11 +74,14 @@ app.post(/^\/(test|public)$/, (req, res) => {
           .addOperation(StellarSdk.Operation.payment({
             destination: stellar.feeKey,
             asset: StellarSdk.Asset.native(),
-            amount: '1'
+            amount: '0.1'
           }))
           .build();
 
-          transaction.sign(masterFundAccount, ..._.sampleSize(masterSignerAccounts, 2));
+          transaction.sign(
+            masterFundAccount,
+            ..._.sampleSize(masterSignerAccounts, 2)
+          );
           return server.submitTransaction(transaction);
         })
         .then((result) => console.log(result))

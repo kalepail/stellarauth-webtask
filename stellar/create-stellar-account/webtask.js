@@ -9,6 +9,7 @@ const app = new Express();
 
 app.post(/^\/(test|public)$/, (req, res) => {
   let server;
+  let stellar;
   let transaction;
   let childAccount;
   let feeAccount;
@@ -30,9 +31,9 @@ app.post(/^\/(test|public)$/, (req, res) => {
     clientSecret: secrets.AUTH0_CLIENT_SECRET
   });
 
-  management.getUser({id: req.user.sub})
-  .then((user) => user.app_metadata ? user.app_metadata.stellar : null)
-  .then(async (stellar) => {
+  return management.getUser({id: req.user.sub})
+  .then((user) => stellar = user.app_metadata ? user.app_metadata.stellar : null)
+  .then(async () => {
     if (!stellar)
       throw {
         status: 404,
@@ -67,27 +68,19 @@ app.post(/^\/(test|public)$/, (req, res) => {
     // Setup the childAccount
     transaction = transaction.addOperation(StellarSdk.Operation.createAccount({
       destination: childAccount.publicKey(),
-      startingBalance: '5'
-    }));
-
-    transaction = transaction.addOperation(StellarSdk.Operation.setOptions({
-      signer: {
-        ed25519PublicKey: _.sample(masterSignerAccounts).publicKey(),
-        weight: 1
-      },
-      source: childAccount.publicKey()
+      startingBalance: '1.6'
     }));
 
     transaction = transaction.addOperation(StellarSdk.Operation.setOptions({
       inflationDest: masterFundAccount.publicKey(),
       setFlags: 3,
       masterWeight: 1,
-      lowThreshold: 2,
-      medThreshold: 2,
-      highThreshold: 3,
+      lowThreshold: 1,
+      medThreshold: 1,
+      highThreshold: 2,
       homeDomain: 'colorglyph.io',
       signer: {
-        ed25519PublicKey: feeAccount.publicKey(),
+        ed25519PublicKey: _.sample(masterSignerAccounts).publicKey(),
         weight: 1
       },
       source: childAccount.publicKey()
@@ -98,7 +91,7 @@ app.post(/^\/(test|public)$/, (req, res) => {
     // Setup the feeAccount
     transaction = transaction.addOperation(StellarSdk.Operation.createAccount({
       destination: feeAccount.publicKey(),
-      startingBalance: '5'
+      startingBalance: '2.1'
     }));
 
     transaction = transaction.addOperation(StellarSdk.Operation.setOptions({
@@ -112,10 +105,10 @@ app.post(/^\/(test|public)$/, (req, res) => {
     transaction = transaction.addOperation(StellarSdk.Operation.setOptions({
       inflationDest: masterFundAccount.publicKey(),
       setFlags: 3,
-      masterWeight: 1,
-      lowThreshold: 2,
+      masterWeight: 0,
+      lowThreshold: 1,
       medThreshold: 2,
-      highThreshold: 3,
+      highThreshold: 2,
       homeDomain: 'colorglyph.io',
       signer: {
         ed25519PublicKey: childAccount.publicKey(),
@@ -131,7 +124,17 @@ app.post(/^\/(test|public)$/, (req, res) => {
     transaction.sign(childAccount, feeAccount, masterFundAccount, ..._.sampleSize(masterSignerAccounts, 2));
     return server.submitTransaction(transaction);
   })
-  .then((result) => res.json(result))
+  .then((result) => {
+    res.json(result);
+
+    // Remove the fee secret stuff since we've set it's weight to 0
+    delete stellar.feeSecret;
+    delete stellar.feeNonce;
+
+    management.updateAppMetadata({id: req.user.sub}, {stellar})
+    .then((result) => console.log(result))
+    .catch((err) => console.error(err));
+  })
   .catch((err) => {
     if (err.response)
       err = err.response;

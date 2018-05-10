@@ -1,12 +1,12 @@
 import * as miscreant from 'miscreant';
-import ab2str from 'arraybuffer-to-string';
 import { encode, decode } from 'base64-arraybuffer';
+import ab2str from 'arraybuffer-to-string';
 import crypto from 'crypto';
 
 export async function encrypt(secret, encoded_dataKey) {
   const dataKey = new Uint8Array(decode(encoded_dataKey));
   const stringBuffer = new Buffer.from(secret, 'utf8');
-  const nonce = crypto.randomBytes(16);
+  const nonce = crypto.randomBytes(256);
 
   const encryptor = await miscreant.AEAD.importKey(dataKey, 'AES-PMAC-SIV', new miscreant.PolyfillCryptoProvider());
   const cipherText = await encryptor.seal(stringBuffer, nonce);
