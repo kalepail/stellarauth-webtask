@@ -47,7 +47,7 @@ app.post(/^\/(test|public)$/, async (req, res) => {
     .addOperation(StellarSdk.Operation.payment({
       destination: stellar.childKey,
       asset: StellarSdk.Asset.native(),
-      amount: '5'
+      amount: '10'
     }))
     .build();
 
