@@ -42,18 +42,9 @@ app.post(/^\/(test|public)$/, (req, res) => {
 
     const childSecret = await decrypt(stellar.childSecret, stellar.childNonce, secrets.CRYPTO_DATAKEY);
           childAccount = StellarSdk.Keypair.fromSecret(childSecret);
-    const feeSecret = await decrypt(stellar.feeSecret, stellar.feeNonce, secrets.CRYPTO_DATAKEY);
-          feeAccount = StellarSdk.Keypair.fromSecret(feeSecret);
 
     return server.loadAccount(childAccount.publicKey()); // Check if child account has already been created
   })
-  .then(() => {
-    throw { // If so throw that error
-      status: 409,
-      message: 'Account has already been created'
-    }
-  })
-  .catch(StellarSdk.NotFoundError, () => server.loadAccount(feeAccount.publicKey())) // Check if fee account has already been created
   .then(() => {
     throw { // If so throw that error
       status: 409,
@@ -65,30 +56,9 @@ app.post(/^\/(test|public)$/, (req, res) => {
     transaction = new StellarSdk.TransactionBuilder(sourceAccount);
 
 
-    // Setup the childAccount
-    transaction = transaction.addOperation(StellarSdk.Operation.createAccount({
-      destination: childAccount.publicKey(),
-      startingBalance: '1.6'
-    }));
-
-    transaction = transaction.addOperation(StellarSdk.Operation.setOptions({
-      inflationDest: masterFundAccount.publicKey(),
-      setFlags: 3,
-      masterWeight: 1,
-      lowThreshold: 1,
-      medThreshold: 1,
-      highThreshold: 2,
-      homeDomain: 'colorglyph.io',
-      signer: {
-        ed25519PublicKey: _.sample(masterSignerAccounts).publicKey(),
-        weight: 1
-      },
-      source: childAccount.publicKey()
-    }));
-    ////
-
-
     // Setup the feeAccount
+    const feeAccount = StellarSdk.Keypair.random();
+
     transaction = transaction.addOperation(StellarSdk.Operation.createAccount({
       destination: feeAccount.publicKey(),
       startingBalance: '2.1'
@@ -119,22 +89,41 @@ app.post(/^\/(test|public)$/, (req, res) => {
     ////
 
 
+    // Setup the childAccount
+    transaction = transaction.addOperation(StellarSdk.Operation.createAccount({
+      destination: childAccount.publicKey(),
+      startingBalance: '2.1'
+    }));
+
+    transaction = transaction.addOperation(StellarSdk.Operation.manageData({
+      name: 'feeKey',
+      value: feeAccount.publicKey(),
+      source: childAccount.publicKey()
+    }));
+
+    transaction = transaction.addOperation(StellarSdk.Operation.setOptions({
+      inflationDest: masterFundAccount.publicKey(),
+      setFlags: 3,
+      masterWeight: 1,
+      lowThreshold: 1,
+      medThreshold: 1,
+      highThreshold: 2,
+      homeDomain: 'colorglyph.io',
+      signer: {
+        ed25519PublicKey: _.sample(masterSignerAccounts).publicKey(),
+        weight: 1
+      },
+      source: childAccount.publicKey()
+    }));
+    ////
+
+
     transaction = transaction.build();
 
     transaction.sign(childAccount, feeAccount, masterFundAccount, ..._.sampleSize(masterSignerAccounts, 2));
     return server.submitTransaction(transaction);
   })
-  .then((result) => {
-    res.json(result);
-
-    // Remove the fee secret stuff since we've set it's weight to 0
-    delete stellar.feeSecret;
-    delete stellar.feeNonce;
-
-    management.updateAppMetadata({id: req.user.sub}, {stellar})
-    .then((result) => console.log(result))
-    .catch((err) => console.error(err));
-  })
+  .then((result) => res.json(result))
   .catch((err) => {
     if (err.response)
       err = err.response;

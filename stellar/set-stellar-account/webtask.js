@@ -1,6 +1,6 @@
 import Express from 'express';
 import wt from 'webtask-tools';
-import Stellar from 'stellar-base';
+import StellarSdk from 'stellar-sdk';
 import { ManagementClient } from 'auth0';
 import { encrypt } from '../../crypt';
 
@@ -27,18 +27,13 @@ app.post('/', (req, res) => {
     if (stellar)
       return {childKey: stellar.childKey};
 
-    const childAccount = Stellar.Keypair.random();
-    const feeAccount = Stellar.Keypair.random();
+    const childAccount = StellarSdk.Keypair.random();
     const {secret: childSecret, nonce: childNonce} = await encrypt(childAccount.secret(), secrets.CRYPTO_DATAKEY);
-    const {secret: feeSecret, nonce: feeNonce} = await encrypt(feeAccount.secret(), secrets.CRYPTO_DATAKEY);
 
     stellar = {
       childSecret,
       childNonce,
-      childKey: childAccount.publicKey(),
-      feeSecret,
-      feeNonce,
-      feeKey: feeAccount.publicKey(),
+      childKey: childAccount.publicKey()
     }
 
     return management.updateAppMetadata({id: req.user.sub}, {stellar})
