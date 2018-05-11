@@ -1,13 +1,9 @@
-import Express from 'express';
-import wt from 'webtask-tools';
 import StellarSdk from 'stellar-sdk';
 import { ManagementClient } from 'auth0';
 import _ from 'lodash';
-import { decrypt } from '../../crypt';
+import { decrypt } from '../../js/crypt';
 
-const app = new Express();
-
-app.post(/^\/(test|public)$/, (req, res) => {
+export default function(req, res, next) {
   let server;
   let stellar;
   let transaction;
@@ -31,7 +27,7 @@ app.post(/^\/(test|public)$/, (req, res) => {
     clientSecret: secrets.AUTH0_CLIENT_SECRET
   });
 
-  return management.getUser({id: req.user.sub})
+  management.getUser({id: req.user.sub})
   .then((user) => stellar = user.app_metadata ? user.app_metadata.stellar : null)
   .then(async () => {
     if (!stellar)
@@ -45,8 +41,8 @@ app.post(/^\/(test|public)$/, (req, res) => {
 
     return server.loadAccount(childAccount.publicKey()); // Check if child account has already been created
   })
-  .then(() => {
-    throw { // If so throw that error
+  .then(() => { // If so throw that error
+    throw {
       status: 409,
       message: 'Account has already been created'
     }
@@ -124,17 +120,5 @@ app.post(/^\/(test|public)$/, (req, res) => {
     return server.submitTransaction(transaction);
   })
   .then((result) => res.json(result))
-  .catch((err) => {
-    if (err.response)
-      err = err.response;
-
-    if (err.data)
-      err = err.data;
-
-    console.error(err);
-    res.status(err.status || 500);
-    res.json(err);
-  });
-});
-
-module.exports = wt.fromExpress(app).auth0();
+  .catch((err) => next(err));
+}

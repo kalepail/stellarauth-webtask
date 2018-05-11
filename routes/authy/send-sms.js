@@ -4,11 +4,7 @@ import bodyParser from 'body-parser';
 import axios from 'axios';
 import { ManagementClient } from 'auth0';
 
-const app = new Express();
-
-app.use(bodyParser.json());
-
-app.post('/', async (req, res) => {
+export default function(req, res, next) {
   const secrets = req.webtaskContext.secrets;
   const management = new ManagementClient({
     domain: secrets.AUTH0_DOMAIN,
@@ -24,30 +20,13 @@ app.post('/', async (req, res) => {
       error: {message: 'Auth0 user Authy account could not be found'}
     }
 
-    if (!authy.verified)
-      management.updateAppMetadata({id: req.user.sub}, {
-        authy: {
-          id: authy.id,
-          verified: true
-        }
-      });
-
-    return axios.get(`https://api.authy.com/protected/json/verify/${req.body.code}/${authy.id}`, {
+    return axios.get(`https://api.authy.com/protected/json/sms/${authy.id}`, {
+      params: {
+        force: true
+      },
       headers: {'X-Authy-API-Key': secrets.AUTHY_API_KEY}
     });
   })
   .then(({data}) => res.json(data))
-  .catch((err) => {
-    if (err.response)
-      err = err.response;
-
-    if (err.data)
-      err = err.data;
-
-    console.error(err);
-    res.status(err.status || 500);
-    res.json(err);
-  });
-});
-
-module.exports = wt.fromExpress(app).auth0();
+  .catch((err) => next(err));
+}

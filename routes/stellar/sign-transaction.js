@@ -1,19 +1,13 @@
-import Express from 'express';
-import wt from 'webtask-tools';
 import StellarSdk from 'stellar-sdk';
 import bodyParser from 'body-parser';
 import { ManagementClient } from 'auth0';
-import { decrypt } from '../../crypt';
+import { decrypt } from '../../js/crypt';
 import { decode } from 'base64-arraybuffer';
 import ab2str from 'arraybuffer-to-string';
 import _ from 'lodash';
 import axios from 'axios';
 
-const app = new Express();
-
-app.use(bodyParser.json());
-
-app.post(/^\/(test|public)$/, (req, res) => {
+export default function(req, res, next) {
   let server;
   let stellar;
 
@@ -29,7 +23,7 @@ app.post(/^\/(test|public)$/, (req, res) => {
 
   axios.defaults.baseURL = secrets.WT_DOMAIN;
 
-  axios.post('verify-authy-code', {
+  axios.post('authy/verify-code', {
     code: req.body.code
   }, {headers: {authorization: req.headers.authorization}})
   .then(() => {
@@ -97,17 +91,5 @@ app.post(/^\/(test|public)$/, (req, res) => {
       }
     });
   })
-  .catch((err) => {
-    if (err.response)
-      err = err.response;
-
-    if (err.data)
-      err = err.data;
-
-    console.error(err);
-    res.status(err.status || 500);
-    res.json(err);
-  });
-});
-
-module.exports = wt.fromExpress(app).auth0();
+  .catch((err) => next(err));
+}

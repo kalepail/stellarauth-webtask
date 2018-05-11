@@ -1,14 +1,12 @@
-import Express from 'express';
-import wt from 'webtask-tools';
 import StellarSdk from 'stellar-sdk';
 import { ManagementClient } from 'auth0';
 import _ from 'lodash';
 
-const app = new Express();
-
-app.post(/^\/(test|public)$/, async (req, res) => {
+export default async function(req, res, next) {
   let server;
   let stellar = req.user['https://colorglyph.io'] ? req.user['https://colorglyph.io'].stellar : null;
+
+  // TODO: Universal StellarSdk
 
   if (req.url === '/public') {
     StellarSdk.Network.usePublicNetwork();
@@ -55,11 +53,5 @@ app.post(/^\/(test|public)$/, async (req, res) => {
     return server.submitTransaction(transaction);
   })
   .then((result) => res.json(result))
-  .catch((err) => {
-    console.error(err);
-    res.status(err.status || 500);
-    res.json({error: {message: err.message}});
-  });
-});
-
-module.exports = wt.fromExpress(app).auth0();
+  .catch((err) => next(err));
+}

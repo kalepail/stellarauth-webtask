@@ -1,12 +1,8 @@
-import Express from 'express';
-import wt from 'webtask-tools';
 import StellarSdk from 'stellar-sdk';
 import { ManagementClient } from 'auth0';
-import { encrypt } from '../../crypt';
+import { encrypt } from '../../js/crypt';
 
-const app = new Express();
-
-app.post('/', (req, res) => {
+export default function(req, res, next) {
   let stellar = req.user['https://colorglyph.io'] ? req.user['https://colorglyph.io'].stellar : null;
 
   if (stellar) {
@@ -40,17 +36,5 @@ app.post('/', (req, res) => {
     .then(() => ({childKey: stellar.childKey}));
   })
   .then((result) => res.json(result))
-  .catch((err) => {
-    if (err.response)
-      err = err.response;
-
-    if (err.data)
-      err = err.data;
-
-    console.error(err);
-    res.status(err.status || 500);
-    res.json(err);
-  });
-});
-
-module.exports = wt.fromExpress(app).auth0();
+  .catch((err) => next(err));
+}

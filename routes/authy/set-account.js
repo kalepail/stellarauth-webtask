@@ -1,14 +1,8 @@
-import Express from 'express';
-import wt from 'webtask-tools';
 import bodyParser from 'body-parser';
 import axios from 'axios';
 import { ManagementClient } from 'auth0';
 
-const app = new Express();
-
-app.use(bodyParser.json());
-
-app.post('/', (req, res) => {
+export default function(req, res, next) {
   const secrets = req.webtaskContext.secrets;
   const management = new ManagementClient({
     domain: secrets.AUTH0_DOMAIN,
@@ -16,19 +10,19 @@ app.post('/', (req, res) => {
     clientSecret: secrets.AUTH0_CLIENT_SECRET
   });
 
+  axios.defaults.baseURL = secrets.WT_DOMAIN;
+
   management.getUser({id: req.user.sub})
   .then((user) => user.app_metadata ? user.app_metadata.authy : null)
   .then((authy) => {
     if (authy)
       return {authy};
 
-    return axios.get(`https://lookups.twilio.com/v1/PhoneNumbers/${req.body.phone.number}`, {
-      auth: {
-        username: secrets.TWILIO_ACCOUNT_SID,
-        password: secrets.TWILIO_AUTH_TOKEN
-      }
-    })
-    .then(({data}) => {
+    return axios.post(
+      'utils/lookup',
+      {number: req.body.phone.number},
+      {headers: {authorization: req.headers.authorization}}
+    ).then(({data}) => {
       if (data.country_code !== req.body.phone.code)
         throw {
           status: 400,
@@ -69,17 +63,5 @@ app.post('/', (req, res) => {
     })
   })
   .then((result) => res.json(result))
-  .catch((err) => {
-    if (err.response)
-      err = err.response;
-
-    if (err.data)
-      err = err.data;
-
-    console.error(err);
-    res.status(err.status || 500);
-    res.json(err);
-  });
-});
-
-module.exports = wt.fromExpress(app).auth0();
+  .catch((err) => next(err));
+}
