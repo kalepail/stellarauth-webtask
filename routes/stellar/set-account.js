@@ -1,5 +1,5 @@
-import StellarSdk from 'stellar-sdk';
 import { ManagementClient } from 'auth0';
+import getStellarServer from '../../js/stellar';
 import { encrypt } from '../../js/crypt';
 
 export default function(req, res, next) {
@@ -10,6 +10,7 @@ export default function(req, res, next) {
     return;
   }
 
+  const {StellarSdk, server} = getStellarServer(req.url);
   const secrets = req.webtaskContext.secrets;
   const management = new ManagementClient({
     domain: secrets.AUTH0_DOMAIN,

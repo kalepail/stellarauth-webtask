@@ -1,24 +1,17 @@
-import StellarSdk from 'stellar-sdk';
-import bodyParser from 'body-parser';
 import { ManagementClient } from 'auth0';
 import { decrypt } from '../../js/crypt';
 import { decode } from 'base64-arraybuffer';
 import ab2str from 'arraybuffer-to-string';
 import _ from 'lodash';
 import axios from 'axios';
+import getStellarServer from '../../js/stellar';
+
+let StellarSdk;
 
 export default function(req, res, next) {
-  let server;
   let stellar;
 
-  if (req.url === '/public') {
-    StellarSdk.Network.usePublicNetwork();
-    server = new StellarSdk.Server('https://horizon.stellar.org');
-  } else {
-    StellarSdk.Network.useTestNetwork();
-    server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
-  }
-
+  const {StellarSdk, server} = getStellarServer(req.url);
   const secrets = req.webtaskContext.secrets;
 
   axios.defaults.baseURL = secrets.WT_DOMAIN;

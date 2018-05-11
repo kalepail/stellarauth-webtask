@@ -1,23 +1,15 @@
-import StellarSdk from 'stellar-sdk';
 import { ManagementClient } from 'auth0';
 import _ from 'lodash';
+import getStellarServer from '../../js/stellar';
 import { decrypt } from '../../js/crypt';
 
 export default function(req, res, next) {
-  let server;
   let stellar;
   let transaction;
   let childAccount;
   let feeAccount;
 
-  if (req.url === '/public') {
-    StellarSdk.Network.usePublicNetwork();
-    server = new StellarSdk.Server('https://horizon.stellar.org');
-  } else {
-    StellarSdk.Network.useTestNetwork();
-    server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
-  }
-
+  const {StellarSdk, server} = getStellarServer(req.url);
   const secrets = req.webtaskContext.secrets;
   const masterFundAccount = StellarSdk.Keypair.fromSecret(secrets.MASTER_FUND_SECRET);
   const masterSignerAccounts = _.map(secrets.MASTER_SIGNER_SECRETS.split(','), (secret) => StellarSdk.Keypair.fromSecret(secret));

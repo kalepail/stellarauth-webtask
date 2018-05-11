@@ -1,21 +1,11 @@
-import StellarSdk from 'stellar-sdk';
 import { ManagementClient } from 'auth0';
+import getStellarServer from '../../js/stellar';
 import _ from 'lodash';
 
 export default async function(req, res, next) {
-  let server;
   let stellar = req.user['https://colorglyph.io'] ? req.user['https://colorglyph.io'].stellar : null;
 
-  // TODO: Universal StellarSdk
-
-  if (req.url === '/public') {
-    StellarSdk.Network.usePublicNetwork();
-    server = new StellarSdk.Server('https://horizon.stellar.org');
-  } else {
-    StellarSdk.Network.useTestNetwork();
-    server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
-  }
-
+  const {StellarSdk, server} = getStellarServer(req.url);
   const secrets = req.webtaskContext.secrets;
   const masterFundAccount = StellarSdk.Keypair.fromSecret(secrets.MASTER_FUND_SECRET);
   const masterSignerAccounts = _.map(secrets.MASTER_SIGNER_SECRETS.split(','), (secret) => StellarSdk.Keypair.fromSecret(secret));

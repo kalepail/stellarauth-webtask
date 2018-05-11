@@ -1,4 +1,3 @@
-import bodyParser from 'body-parser';
 import axios from 'axios';
 import { ManagementClient } from 'auth0';
 

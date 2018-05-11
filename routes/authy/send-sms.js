@@ -1,6 +1,3 @@
-import Express from 'express';
-import wt from 'webtask-tools';
-import bodyParser from 'body-parser';
 import axios from 'axios';
 import { ManagementClient } from 'auth0';
 
