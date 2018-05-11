@@ -9,12 +9,6 @@ const app = new Express();
 app.use(bodyParser.json());
 
 app.post('/', (req, res) => {
-  let user = req.user;
-  let authy = user['https://colorglyph.io'] ? user['https://colorglyph.io'].authy : null;
-
-  if (authy)
-    return res.json({authy});
-
   const secrets = req.webtaskContext.secrets;
   const management = new ManagementClient({
     domain: secrets.AUTH0_DOMAIN,
@@ -22,11 +16,8 @@ app.post('/', (req, res) => {
     clientSecret: secrets.AUTH0_CLIENT_SECRET
   });
 
-  management.getUser({id: user.sub})
-  .then((user) => {
-    user = user;
-    return user.app_metadata ? user.app_metadata.authy : null;
-  })
+  management.getUser({id: req.user.sub})
+  .then((user) => user.app_metadata ? user.app_metadata.authy : null)
   .then((authy) => {
     if (authy)
       return {authy};
@@ -73,7 +64,7 @@ app.post('/', (req, res) => {
           message: `Authy user with this id already exists`
         }
 
-      return management.updateAppMetadata({id: user.sub}, {authy})
+      return management.updateAppMetadata({id: req.user.sub}, {authy})
       .then(() => authy);
     })
   })
