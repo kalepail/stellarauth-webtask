@@ -1,3 +1,3 @@
-# Stellar Webtasks
+# StellarAuth Webtask
 
 TODO
