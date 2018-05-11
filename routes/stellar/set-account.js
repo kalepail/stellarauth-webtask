@@ -10,7 +10,7 @@ export default function(req, res, next) {
     return;
   }
 
-  const {StellarSdk, server} = getStellarServer(req.url);
+  const {StellarSdk} = getStellarServer(req.url);
   const secrets = req.webtaskContext.secrets;
   const management = new ManagementClient({
     domain: secrets.AUTH0_DOMAIN,
