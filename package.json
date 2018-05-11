@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "dev": "wt create app.js -n stellar-auth -p stellar-auth --secrets-file .secrets --bundle -w",
-    "deploy": "wt create app.js -n stellar-auth -p stellar-auth --secrets-file .secrets --bundle --bundle-minify"
+    "dev": "wt create app.js -n stellarauth -p stellarauth --secrets-file .secrets --bundle -w",
+    "deploy": "wt create app.js -n stellarauth -p stellarauth --secrets-file .secrets --bundle --bundle-minify"
   },
   "dependencies": {
     "arraybuffer-to-string": "^1.0.2",
