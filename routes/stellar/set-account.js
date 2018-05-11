@@ -1,5 +1,5 @@
 import { ManagementClient } from 'auth0';
-import getStellarServer from '../../js/stellar';
+import { getStellarServer } from '../../js/stellar';
 import { encrypt } from '../../js/crypt';
 
 export default function(req, res, next) {

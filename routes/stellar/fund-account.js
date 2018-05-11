@@ -1,5 +1,5 @@
 import { ManagementClient } from 'auth0';
-import getStellarServer from '../../js/stellar';
+import { getStellarServer } from '../../js/stellar';
 import _ from 'lodash';
 
 export default async function(req, res, next) {

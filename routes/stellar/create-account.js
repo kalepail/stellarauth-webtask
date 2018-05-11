@@ -1,6 +1,6 @@
 import { ManagementClient } from 'auth0';
 import _ from 'lodash';
-import getStellarServer from '../../js/stellar';
+import { getStellarServer } from '../../js/stellar';
 import { decrypt } from '../../js/crypt';
 
 export default function(req, res, next) {
