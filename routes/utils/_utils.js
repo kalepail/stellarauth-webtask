@@ -4,6 +4,6 @@ import lookup from './lookup';
 
 const router = express.Router();
 
-router.post('/utils/lookup', lookup);
+router.post('/lookup', lookup);
 
 export default router;

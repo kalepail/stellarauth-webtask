@@ -7,9 +7,9 @@ import generateQr from './generate-qr';
 
 const router = express.Router();
 
-router.post('/authy/set-account', setAccount);
-router.post('/authy/send-sms', sendSms);
-router.post('/authy/verify-code', verifyCode);
-router.post('/authy/generate-qr', generateQr);
+router.post('/set-account', setAccount);
+router.post('/send-sms', sendSms);
+router.post('/verify-code', verifyCode);
+router.post('/generate-qr', generateQr);
 
 export default router;

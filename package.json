@@ -1,7 +1,15 @@
 {
   "scripts": {
-    "dev": "wt create app.js -n stellarauth -p stellarauth --secrets-file .secrets --bundle -w",
-    "deploy": "wt create app.js -n stellarauth -p stellarauth --secrets-file .secrets --bundle --bundle-minify"
+    "deploy": "npm run deploy:utils && npm run deploy:authy && npm run deploy:stellar",
+
+    "dev:utils": "wt create utils.js -n utils --host webtask.stellarauth.com --secrets-file .secrets --bundle -w",
+    "deploy:utils": "wt create utils.js -n utils --host webtask.stellarauth.com --secrets-file .secrets --bundle --bundle-minify",
+
+    "dev:authy": "wt create authy.js -n authy --host webtask.stellarauth.com --secrets-file .secrets --bundle -w",
+    "deploy:authy": "wt create authy.js -n authy --host webtask.stellarauth.com --secrets-file .secrets --bundle --bundle-minify",
+
+    "dev:stellar": "wt create stellar.js -n stellar --host webtask.stellarauth.com --secrets-file .secrets --bundle -w",
+    "deploy:stellar": "wt create stellar.js -n stellar --host webtask.stellarauth.com --secrets-file .secrets --bundle --bundle-minify"
   },
   "dependencies": {
     "arraybuffer-to-string": "^1.0.2",

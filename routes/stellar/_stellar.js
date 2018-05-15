@@ -7,9 +7,9 @@ import signTransaction from './sign-transaction';
 
 const router = express.Router();
 
-router.post('/stellar/set-account', setAccount);
-router.post(/\/stellar\/create-account\/(test|public)/, createAccount);
-router.post(/\/stellar\/fund-account\/(test|public)/, fundAccount);
-router.post(/\/stellar\/sign-transaction\/(test|public)/, signTransaction);
+router.post('/set-account', setAccount);
+router.post(/\/create-account\/(test|public)/, createAccount);
+router.post(/\/fund-account\/(test|public)/, fundAccount);
+router.post(/\/sign-transaction\/(test|public)/, signTransaction);
 
 export default router;

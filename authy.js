@@ -2,16 +2,12 @@ import express from 'express';
 import wt from 'webtask-tools';
 import { json, urlencoded } from 'body-parser';
 
-import utils from './routes/utils/_utils';
-import stellar from './routes/stellar/_stellar';
 import authy from './routes/authy/_authy';
 
 const app = express();
 
 app.use(urlencoded({extended: true}));
 app.use(json());
-app.use(utils);
-app.use(stellar);
 app.use(authy);
 
 app.use((req, res, next) => {
