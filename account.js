@@ -1,15 +1,14 @@
 import express from 'express';
 import wt from 'webtask-tools';
 import { json, urlencoded } from 'body-parser';
-import { getJwt } from './js/jwt';
 
-import utils from './routes/utils/_utils';
+import account from './routes/account/_account';
 
 const app = express();
 
 app.use(urlencoded({extended: true}));
 app.use(json());
-app.use(utils);
+app.use(account);
 
 app.use((req, res, next) => {
   const err = new Error('Not Found');
@@ -29,14 +28,4 @@ app.use((err, req, res, next) => {
   res.json(err);
 });
 
-module.exports = wt.fromExpress(app).auth0({
-  clientId: (ctx, req) => {
-    const { client_id } = getJwt(req.headers['x-sa-token'], ctx.secrets.CRYPTO_SECRET);
-    return client_id
-  },
-  clientSecret: (ctx, req) => {
-    const { client_secret } = getJwt(req.headers['x-sa-token'], ctx.secrets.CRYPTO_SECRET);
-    return client_secret
-  },
-  domain: (ctx, req) => ctx.secrets.AUTH0_DOMAIN
-});
+module.exports = wt.fromExpress(app);

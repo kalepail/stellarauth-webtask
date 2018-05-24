@@ -1,40 +1,38 @@
+import crypto from 'crypto'
+import generateKeyPair from '../../js/sep5'
+import { encode } from 'base64-arraybuffer'
+import { decrypt, encrypt } from '../../js/crypt';
 import { ManagementClient } from 'auth0';
-import { getStellarServer } from '../../js/stellar';
-import { encrypt } from '../../js/crypt';
+import { getJwt } from '../../js/jwt';
 
-export default function(req, res, next) {
-  let stellar = req.user['https://colorglyph.io'] ? req.user['https://colorglyph.io'].stellar : null;
-
-  if (stellar) {
-    res.json({childKey: stellar.childKey});
-    return;
-  }
-
-  const {StellarSdk} = getStellarServer(req.url);
+export default async function(req, res, next) {
   const secrets = req.webtaskContext.secrets;
+  const tokenData = getJwt(req.headers['x-sa-token'], secrets.CRYPTO_SECRET)
   const management = new ManagementClient({
     domain: secrets.AUTH0_DOMAIN,
-    clientId: secrets.AUTH0_CLIENT_ID,
-    clientSecret: secrets.AUTH0_CLIENT_SECRET
+    clientId: tokenData.client_id,
+    clientSecret: tokenData.client_secret
   });
 
   management.getUser({id: req.user.sub})
   .then((user) => user.app_metadata ? user.app_metadata.stellar : null)
   .then(async (stellar) => {
-    if (stellar)
-      return {childKey: stellar.childKey};
+    if (stellar) return await decrypt(
+      stellar.secret,
+      stellar.nonce,
+      secrets.CRYPTO_DATAKEY
+    );
 
-    const childAccount = StellarSdk.Keypair.random();
-    const {secret: childSecret, nonce: childNonce} = await encrypt(childAccount.secret(), secrets.CRYPTO_DATAKEY);
+    const seed = encode(crypto.randomBytes(256))
 
-    stellar = {
-      childSecret,
-      childNonce,
-      childKey: childAccount.publicKey()
-    }
+    stellar = await encrypt(seed, secrets.CRYPTO_DATAKEY)
 
     return management.updateAppMetadata({id: req.user.sub}, {stellar})
-    .then(() => ({childKey: stellar.childKey}));
+    .then(() => seed);
+  })
+  .then(async (seed) => {
+    const keyPair = generateKeyPair(req, seed, tokenData.iat);
+    return {childKey: keyPair.publicKey()};
   })
   .then((result) => res.json(result))
   .catch((err) => next(err));

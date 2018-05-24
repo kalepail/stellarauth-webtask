@@ -1,12 +1,14 @@
 import axios from 'axios';
 import { ManagementClient } from 'auth0';
+import { getJwt } from '../../js/jwt';
 
 export default function(req, res, next) {
   const secrets = req.webtaskContext.secrets;
+  const tokenData = getJwt(req.headers['x-sa-token'], secrets.CRYPTO_SECRET)
   const management = new ManagementClient({
     domain: secrets.AUTH0_DOMAIN,
-    clientId: secrets.AUTH0_CLIENT_ID,
-    clientSecret: secrets.AUTH0_CLIENT_SECRET
+    clientId: tokenData.client_id,
+    clientSecret: tokenData.client_secret
   });
 
   management.getUser({id: req.user.sub})
@@ -23,7 +25,7 @@ export default function(req, res, next) {
     }
 
     return axios.post(`https://api.authy.com/protected/json/users/${authy.id}/secret`, {
-      label: 'Colorglyph',
+      label: 'Stellar Auth',
       qr_size: 320
     }, {
       headers: {'X-Authy-API-Key': secrets.AUTHY_API_KEY}
