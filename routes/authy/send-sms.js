@@ -16,7 +16,7 @@ export default function(req, res, next) {
   .then((authy) => {
     if (!authy) throw {
       status: 404,
-      error: {message: 'Auth0 user Authy account could not be found'}
+      message: 'Auth0 user Authy account could not be found'
     }
 
     return axios.get(`https://api.authy.com/protected/json/sms/${authy.id}`, {

@@ -16,12 +16,12 @@ export default function(req, res, next) {
   .then((authy) => {
     if (!authy) throw {
       status: 404,
-      error: {message: 'Auth0 user Authy account could not be found'}
+      message: 'Auth0 user Authy account could not be found'
     }
 
     if (!authy.verified) throw {
       status: 400,
-      error: {message: 'Authy account has not been verified'}
+      message: 'Authy account has not been verified'
     }
 
     return axios.post(`https://api.authy.com/protected/json/users/${authy.id}/secret`, {
