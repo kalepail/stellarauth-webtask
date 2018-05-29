@@ -1,9 +1,11 @@
 import express from 'express';
 
-import getsert from './getsert';
+import get from './get';
+import jwt from './jwt';
 
 const router = express.Router();
 
-router.post('/', getsert);
+router.get(/\/(test|public)/, get);
+router.post(/\/(test|public)/, jwt);
 
 export default router;

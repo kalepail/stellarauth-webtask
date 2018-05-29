@@ -4,7 +4,13 @@ import _ from 'lodash';
 import StellarSdk from 'stellar-sdk';
 
 export function getStellarServer(path) {
-  if (path === '/public') {
+  let server;
+
+  path = _.last(path.split('?')[0].split('/'));
+
+  console.log(path);
+
+  if (path === 'public') {
     StellarSdk.Network.usePublicNetwork();
     server = new StellarSdk.Server('https://horizon.stellar.org');
   } else {
