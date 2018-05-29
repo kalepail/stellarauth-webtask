@@ -1,11 +1,11 @@
 import express from 'express';
 
 import get from './get';
-import jwt from './jwt';
+import submit from './submit';
 
 const router = express.Router();
 
-router.get(/\/(test|public)/, get);
-router.post(/\/(test|public)/, jwt);
+router.get('/', get);
+router.post(/\/(test|public)/, submit);
 
 export default router;

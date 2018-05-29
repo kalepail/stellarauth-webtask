@@ -8,8 +8,6 @@ export function getStellarServer(path) {
 
   path = _.last(path.split('?')[0].split('/'));
 
-  console.log(path);
-
   if (path === 'public') {
     StellarSdk.Network.usePublicNetwork();
     server = new StellarSdk.Server('https://horizon.stellar.org');

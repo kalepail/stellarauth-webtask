@@ -1,25 +1,11 @@
 {
   "scripts": {
-    "deploy": "npm run deploy:utils && npm run deploy:authy && npm run deploy:stellar && npm run deploy:account && npm run deploy:developer && npm run deploy:user",
-    "dev:utils": "wt create utils.js -n utils --host webtask.stellarauth.com --secrets-file .secrets --bundle -w",
-    "deploy:utils": "wt create utils.js -n utils --host webtask.stellarauth.com --secrets-file .secrets --bundle --bundle-minify",
-    "dev:authy": "wt create authy.js -n authy --host webtask.stellarauth.com --secrets-file .secrets --bundle -w",
-    "deploy:authy": "wt create authy.js -n authy --host webtask.stellarauth.com --secrets-file .secrets --bundle --bundle-minify",
-    "dev:stellar": "wt create stellar.js -n stellar --host webtask.stellarauth.com --secrets-file .secrets --bundle -w",
-    "deploy:stellar": "wt create stellar.js -n stellar --host webtask.stellarauth.com --secrets-file .secrets --bundle --bundle-minify",
-    "dev:account": "wt create account.js -n account --host webtask.stellarauth.com --secrets-file .secrets --bundle -w",
-    "deploy:account": "wt create account.js -n account --host webtask.stellarauth.com --secrets-file .secrets --bundle --bundle-minify",
-    "dev:developer": "wt create developer.js -n developer --host webtask.stellarauth.com --secrets-file .secrets --bundle -w",
-    "deploy:developer": "wt create developer.js -n developer --host webtask.stellarauth.com --secrets-file .secrets --bundle --bundle-minify",
+    "deploy": "npm run deploy:user",
     "dev:user": "wt create user.js -n user --host webtask.stellarauth.com --secrets-file .secrets --bundle -w",
     "deploy:user": "wt create user.js -n user --host webtask.stellarauth.com --secrets-file .secrets --bundle --bundle-minify"
   },
   "dependencies": {
-    "@google-cloud/datastore": "^1.4.0",
     "arraybuffer-to-string": "^1.0.2",
-    "auth0": "^2.9.1",
-    "authy": "^1.3.0",
-    "axios": "^0.18.0",
     "base64-arraybuffer": "^0.1.5",
     "body-parser": "^1.18.2",
     "crypto": "^1.0.1",
@@ -29,7 +15,9 @@
     "miscreant": "^0.3.2",
     "moment": "^2.22.1",
     "nonce": "^1.0.4",
+    "qrcode": "^1.2.0",
     "sjcl-aws": "^1.0.8",
+    "speakeasy": "^2.0.0",
     "stellar-sdk": "^0.8.0",
     "webtask-tools": "^3.2.1"
   }

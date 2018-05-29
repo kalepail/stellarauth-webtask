@@ -1,8 +1,8 @@
 import sjcl from 'sjcl-aws';
 import { getStellarServer } from './stellar';
 
-export default function(req, seed) {
-  const { StellarSdk } = getStellarServer(req.url);
+export default function(path, seed) {
+  const { StellarSdk } = getStellarServer(path);
 
   const hmac = new sjcl.misc.hmac(
     sjcl.codec.utf8String.toBits('ed25519 seed'),
