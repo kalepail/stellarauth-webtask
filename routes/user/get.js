@@ -52,6 +52,7 @@ export default async function(req, res, next) {
         sub: secret.base32,
         iat: parseInt(moment().format('X'))
       }, secrets.CRYPTO_SECRET),
+      key: secret.base32,
       qrCode
     }))
     .then((response) => res.json(response))
