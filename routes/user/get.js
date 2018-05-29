@@ -6,7 +6,7 @@ import QRCode from 'qrcode'
 
 export default async function(req, res, next) {
   const secrets = req.webtaskContext.secrets;
-  const token = req.headers['authorization'].split(' ')[1];
+  const token = req.headers['authorization'] ? req.headers['authorization'].split(' ')[1] : null;
 
   if (token && req.query.code) {
     try {
