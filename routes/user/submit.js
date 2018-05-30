@@ -8,7 +8,7 @@ export default async function(req, res, next) {
   const token = req.headers['authorization'] ? req.headers['authorization'].split(' ')[1] : null;
 
   try {
-    const tokenData = getJwt(token, secrets.CRYPTO_SECRET);
+    const tokenData = getJwt(token, secrets.JWT_SECRET);
     const verified = speakeasy.totp.verify({
       secret: tokenData.sub,
       token: req.body.code,
@@ -16,7 +16,7 @@ export default async function(req, res, next) {
     });
 
     if (verified) {
-      const keyPair = generateKeyPair(req.url, tokenData.sub)
+      const keyPair = generateKeyPair(req.url, tokenData.sub + secrets.STR_SECRET)
       const { server, StellarSdk } = getStellarServer(req.url);
 
       server

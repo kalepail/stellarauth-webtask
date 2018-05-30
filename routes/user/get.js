@@ -11,7 +11,7 @@ export default async function(req, res, next) {
 
   if (token && req.query.code) {
     try {
-      const tokenData = getJwt(token, secrets.CRYPTO_SECRET);
+      const tokenData = getJwt(token, secrets.JWT_SECRET);
       const verified = speakeasy.totp.verify({
         secret: tokenData.sub,
         token: req.query.code,
@@ -19,7 +19,7 @@ export default async function(req, res, next) {
       });
 
       if (verified) {
-        const keyPair = generateKeyPair(req.url, tokenData.sub)
+        const keyPair = generateKeyPair(req.url, tokenData.sub + secrets.STR_SECRET)
         const publicKey = keyPair.publicKey()
 
         res.json({
@@ -47,7 +47,7 @@ export default async function(req, res, next) {
         sub: secret,
         iat: parseInt(moment().format('X')),
         exp: parseInt(moment().add(1, 'day').format('X'))
-      }, secrets.CRYPTO_SECRET),
+      }, secrets.JWT_SECRET),
       secret,
       qrCode
     }))
