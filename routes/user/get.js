@@ -1,8 +1,11 @@
-import generateKeyPair from '../../js/sep5'
+import { generateKeyPair, generateKey } from '../../js/sep5'
 import { getJwt, setJwt } from '../../js/jwt';
 import moment from 'moment'
 import speakeasy from 'speakeasy'
 import QRCode from 'qrcode'
+
+import crypto from 'crypto'
+import base32 from 'base32.js'
 
 export default async function(req, res, next) {
   const secrets = req.webtaskContext.secrets;
@@ -44,15 +47,20 @@ export default async function(req, res, next) {
   }
 
   else {
-    const secret = speakeasy.generateSecret({ name: 'StellarAuth' });
+    var secret = base32.encode(new Buffer(req.query.id)).toString().replace(/=/g, '')
+    var url = speakeasy.otpauthURL({
+      secret: req.query.id,
+      label: 'StellarAuth',
+      algorithm: 'sha512'
+    });
 
-    return QRCode.toDataURL(secret.otpauth_url)
+    console.log(
+
+    );
+
+    return QRCode.toDataURL(url)
     .then((qrCode) => ({
-      userToken: setJwt({
-        sub: secret.base32,
-        iat: parseInt(moment().format('X'))
-      }, secrets.CRYPTO_SECRET),
-      key: secret.base32,
+      secret,
       qrCode
     }))
     .then((response) => res.json(response))

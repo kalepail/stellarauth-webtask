@@ -5,15 +5,21 @@
     "deploy:user": "wt create user.js -n user --host webtask.stellarauth.com --secrets-file .secrets --bundle --bundle-minify"
   },
   "dependencies": {
+    "base-64": "^0.1.0",
+    "base32.js": "^0.1.0",
     "body-parser": "^1.18.2",
+    "crypto": "^1.0.1",
     "express": "^4.16.3",
+    "js-sha512": "^0.7.1",
     "jsonwebtoken": "^8.2.1",
     "lodash": "^4.17.10",
     "moment": "^2.22.1",
     "qrcode": "^1.2.0",
+    "sha1": "^1.1.1",
     "sjcl-aws": "^1.0.8",
     "speakeasy": "^2.0.0",
     "stellar-sdk": "^0.8.0",
+    "utf8": "^3.0.0",
     "webtask-tools": "^3.2.1"
   }
 }
