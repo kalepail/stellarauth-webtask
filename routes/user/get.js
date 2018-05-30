@@ -1,32 +1,29 @@
-import { generateKeyPair, generateKey } from '../../js/sep5'
-import { getJwt, setJwt } from '../../js/jwt';
 import moment from 'moment'
 import speakeasy from 'speakeasy'
 import QRCode from 'qrcode'
-
-import crypto from 'crypto'
-import base32 from 'base32.js'
+import { generateKeyPair, encode32 } from '../../js/stellar'
+import { getJwt, setJwt } from '../../js/jwt';
+import { encrypt, decrypt } from '../../js/crypto'
 
 export default async function(req, res, next) {
-  const secrets = req.webtaskContext.secrets;
-  const token = req.headers['authorization'] ? req.headers['authorization'].split(' ')[1] : null;
+  const secrets = req.webtaskContext.secrets
+  const secret = encrypt(req.query.id)
 
-  if (token && req.query.code) {
+  if (req.query.code) {
     try {
-      const tokenData = getJwt(token, secrets.CRYPTO_SECRET);
       const verified = speakeasy.totp.verify({
-        encoding: 'base32',
-        secret: tokenData.sub,
-        token: req.query.code
+        secret,
+        token: req.query.code,
+        encoding: 'base32'
       });
 
       if (verified) {
         const authToken = setJwt({
-          sub: tokenData.sub,
+          sub: secret,
           iat: parseInt(moment().format('X')),
           exp: parseInt(moment().add(1, 'day').format('X'))
         }, secrets.CRYPTO_SECRET)
-        const keyPair = generateKeyPair(req.url, `${tokenData.sub}@${secrets.CRYPTO_SECRET}`)
+        const keyPair = generateKeyPair(req.url, secret)
         const publicKey = keyPair.publicKey()
 
         res.json({
@@ -47,18 +44,7 @@ export default async function(req, res, next) {
   }
 
   else {
-    var secret = base32.encode(new Buffer(req.query.id)).toString().replace(/=/g, '')
-    var url = speakeasy.otpauthURL({
-      secret: req.query.id,
-      label: 'StellarAuth',
-      algorithm: 'sha512'
-    });
-
-    console.log(
-
-    );
-
-    return QRCode.toDataURL(url)
+    return QRCode.toDataURL(`otpauth://totp/StellarAuth?secret=${secret}&algorithm=SHA512`)
     .then((qrCode) => ({
       secret,
       qrCode

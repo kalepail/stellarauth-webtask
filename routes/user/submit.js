@@ -1,23 +1,22 @@
-import generateKeyPair from '../../js/sep5'
-import { getStellarServer } from '../../js/stellar';
-import { getJwt } from '../../js/jwt';
 import speakeasy from 'speakeasy'
+import { getStellarServer, generateKeyPair } from '../../js/stellar'
+import { getJwt } from '../../js/jwt'
+import { encode } from '../../js/crypto'
 
 export default async function(req, res, next) {
+  const secrets = req.webtaskContext.secrets;
   const token = req.headers['authorization'] ? req.headers['authorization'].split(' ')[1] : null;
 
   try {
-    const secrets = req.webtaskContext.secrets;
     const tokenData = getJwt(token, secrets.CRYPTO_SECRET);
-
     const verified = speakeasy.totp.verify({
-      encoding: 'base32',
       secret: tokenData.sub,
-      token: req.body.code
+      token: req.body.code,
+      encoding: 'base32'
     });
 
     if (verified) {
-      const keyPair = generateKeyPair(req.url, `${tokenData.sub}@${secrets.CRYPTO_SECRET}`)
+      const keyPair = generateKeyPair(req.url, tokenData.sub)
       const { server, StellarSdk } = getStellarServer(req.url);
 
       server
