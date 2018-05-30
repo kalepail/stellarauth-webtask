@@ -7,27 +7,22 @@ import { encrypt, decrypt } from '../../js/crypto'
 
 export default async function(req, res, next) {
   const secrets = req.webtaskContext.secrets
-  const secret = encrypt(req.query.id)
+  const token = req.headers['authorization'] ? req.headers['authorization'].split(' ')[1] : null
 
-  if (req.query.code) {
+  if (token && req.query.code) {
     try {
+      const tokenData = getJwt(token, secrets.CRYPTO_SECRET);
       const verified = speakeasy.totp.verify({
-        secret,
+        secret: tokenData.sub,
         token: req.query.code,
         encoding: 'base32'
       });
 
       if (verified) {
-        const authToken = setJwt({
-          sub: secret,
-          iat: parseInt(moment().format('X')),
-          exp: parseInt(moment().add(1, 'day').format('X'))
-        }, secrets.CRYPTO_SECRET)
-        const keyPair = generateKeyPair(req.url, secret)
+        const keyPair = generateKeyPair(req.url, tokenData.sub)
         const publicKey = keyPair.publicKey()
 
         res.json({
-          authToken,
           publicKey
         })
       }
@@ -43,13 +38,23 @@ export default async function(req, res, next) {
     }
   }
 
-  else {
+  else if (req.query.id) {
+    const secret = encrypt(req.query.id)
+
     return QRCode.toDataURL(`otpauth://totp/StellarAuth?secret=${secret}&algorithm=SHA512`)
     .then((qrCode) => ({
+      token: setJwt({
+        sub: secret,
+        iat: parseInt(moment().format('X')),
+        exp: parseInt(moment().add(1, 'day').format('X'))
+      }, secrets.CRYPTO_SECRET),
       secret,
       qrCode
     }))
     .then((response) => res.json(response))
     .catch((err) => next(err));
   }
+
+  else
+    next()
 }
