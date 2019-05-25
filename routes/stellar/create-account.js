@@ -8,7 +8,6 @@ import { getJwt } from '../../js/jwt';
 export default function(req, res, next) {
   let transaction;
   let childAccount;
-  let feeAccount;
 
   const { StellarSdk, server } = getStellarServer(req.url);
   const secrets = req.webtaskContext.secrets;
@@ -45,7 +44,12 @@ export default function(req, res, next) {
       message: 'Account has already been created'
     }
   })
-  .catch(StellarSdk.NotFoundError, () => server.loadAccount(masterFundAccount.publicKey())) // Otherwise load in the fund account
+  .catch((err) => { // Otherwise load in the fund account
+    if (err.response.status === 404)
+      return server.loadAccount(masterFundAccount.publicKey())
+    else
+      throw err
+  })
   .then((sourceAccount) => {
     transaction = new StellarSdk.TransactionBuilder(sourceAccount);
 

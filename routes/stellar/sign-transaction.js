@@ -5,8 +5,6 @@ import { getStellarServer, refillFeeAccount } from '../../js/stellar';
 import { getJwt } from '../../js/jwt';
 import generateKeyPair from '../../js/sep5'
 
-let StellarSdk;
-
 export default function(req, res, next) {
   let childAccount;
 
