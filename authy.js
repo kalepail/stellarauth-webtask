@@ -1,6 +1,7 @@
 import express from 'express';
 import wt from 'webtask-tools';
 import { json, urlencoded } from 'body-parser';
+import { getJwt } from './js/jwt';
 
 import authy from './routes/authy/_authy';
 
@@ -28,4 +29,14 @@ app.use((err, req, res, next) => {
   res.json(err);
 });
 
-module.exports = wt.fromExpress(app).auth0();
+module.exports = wt.fromExpress(app).auth0({
+  clientId: (ctx, req) => {
+    const { client_id } = getJwt(req.headers['x-sa-token'], ctx.secrets.CRYPTO_SECRET);
+    return client_id
+  },
+  clientSecret: (ctx, req) => {
+    const { client_secret } = getJwt(req.headers['x-sa-token'], ctx.secrets.CRYPTO_SECRET);
+    return client_secret
+  },
+  domain: (ctx, req) => ctx.secrets.AUTH0_DOMAIN
+});

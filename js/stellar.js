@@ -4,6 +4,8 @@ import _ from 'lodash';
 import StellarSdk from 'stellar-sdk';
 
 export function getStellarServer(path) {
+  let server
+
   if (path === '/public') {
     StellarSdk.Network.usePublicNetwork();
     server = new StellarSdk.Server('https://horizon.stellar.org');
@@ -19,14 +21,14 @@ export function refillFeeAccount({
   StellarSdk,
   server,
   secrets,
-  stellar
+  childAccount
 }) {
   let feeKey;
 
   const masterFundAccount = StellarSdk.Keypair.fromSecret(secrets.MASTER_FUND_SECRET);
   const masterSignerAccounts = _.map(secrets.MASTER_SIGNER_SECRETS.split(','), (secret) => StellarSdk.Keypair.fromSecret(secret));
 
-  server.loadAccount(stellar.childKey)
+  server.loadAccount(childAccount.publicKey())
   .then((sourceAccount) => {
     feeKey = ab2str(decode(sourceAccount.data_attr.feeKey));
     return server.loadAccount(feeKey);

@@ -1,12 +1,14 @@
 import axios from 'axios';
 import { ManagementClient } from 'auth0';
+import { getJwt } from '../../js/jwt';
 
 export default function(req, res, next) {
   const secrets = req.webtaskContext.secrets;
+  const tokenData = getJwt(req.headers['x-sa-token'], secrets.CRYPTO_SECRET)
   const management = new ManagementClient({
     domain: secrets.AUTH0_DOMAIN,
-    clientId: secrets.AUTH0_CLIENT_ID,
-    clientSecret: secrets.AUTH0_CLIENT_SECRET
+    clientId: tokenData.client_id,
+    clientSecret: tokenData.client_secret
   });
 
   management.getUser({id: req.user.sub})

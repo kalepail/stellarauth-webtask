@@ -2,34 +2,39 @@ import { ManagementClient } from 'auth0';
 import _ from 'lodash';
 import { getStellarServer } from '../../js/stellar';
 import { decrypt } from '../../js/crypt';
+import generateKeyPair from '../../js/sep5'
+import { getJwt } from '../../js/jwt';
 
 export default function(req, res, next) {
-  let stellar;
   let transaction;
   let childAccount;
-  let feeAccount;
 
-  const {StellarSdk, server} = getStellarServer(req.url);
+  const { StellarSdk, server } = getStellarServer(req.url);
   const secrets = req.webtaskContext.secrets;
   const masterFundAccount = StellarSdk.Keypair.fromSecret(secrets.MASTER_FUND_SECRET);
   const masterSignerAccounts = _.map(secrets.MASTER_SIGNER_SECRETS.split(','), (secret) => StellarSdk.Keypair.fromSecret(secret));
+  const tokenData = getJwt(req.headers['x-sa-token'], secrets.CRYPTO_SECRET)
   const management = new ManagementClient({
     domain: secrets.AUTH0_DOMAIN,
-    clientId: secrets.AUTH0_CLIENT_ID,
-    clientSecret: secrets.AUTH0_CLIENT_SECRET
+    clientId: tokenData.client_id,
+    clientSecret: tokenData.client_secret
   });
 
   management.getUser({id: req.user.sub})
-  .then((user) => stellar = user.app_metadata ? user.app_metadata.stellar : null)
-  .then(async () => {
-    if (!stellar)
-      throw {
-        status: 404,
-        message: 'Auth0 user Stellar account could not be found'
-      }
+  .then((user) => user.app_metadata ? user.app_metadata.stellar : null)
+  .then(async (stellar) => {
+    if (!stellar) throw {
+      status: 404,
+      message: 'Auth0 user Stellar account could not be found'
+    }
 
-    const childSecret = await decrypt(stellar.childSecret, stellar.childNonce, secrets.CRYPTO_DATAKEY);
-          childAccount = StellarSdk.Keypair.fromSecret(childSecret);
+    const seed = await decrypt(
+      stellar.secret,
+      stellar.nonce,
+      secrets.CRYPTO_DATAKEY
+    );
+
+    childAccount = generateKeyPair(req, seed, tokenData.iat);
 
     return server.loadAccount(childAccount.publicKey()); // Check if child account has already been created
   })
@@ -39,7 +44,12 @@ export default function(req, res, next) {
       message: 'Account has already been created'
     }
   })
-  .catch(StellarSdk.NotFoundError, () => server.loadAccount(masterFundAccount.publicKey())) // Otherwise load in the fund account
+  .catch((err) => { // Otherwise load in the fund account
+    if (err.response.status === 404)
+      return server.loadAccount(masterFundAccount.publicKey())
+    else
+      throw err
+  })
   .then((sourceAccount) => {
     transaction = new StellarSdk.TransactionBuilder(sourceAccount);
 
@@ -67,7 +77,7 @@ export default function(req, res, next) {
       lowThreshold: 1,
       medThreshold: 2,
       highThreshold: 2,
-      homeDomain: 'colorglyph.io',
+      homeDomain: 'stellarauth.com',
       signer: {
         ed25519PublicKey: childAccount.publicKey(),
         weight: 1
@@ -96,7 +106,7 @@ export default function(req, res, next) {
       lowThreshold: 1,
       medThreshold: 1,
       highThreshold: 2,
-      homeDomain: 'colorglyph.io',
+      homeDomain: 'stellarauth.com',
       signer: {
         ed25519PublicKey: _.sample(masterSignerAccounts).publicKey(),
         weight: 1
