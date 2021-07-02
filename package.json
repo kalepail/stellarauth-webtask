@@ -24,7 +24,7 @@
     "miscreant": "^0.3.2",
     "nonce": "^1.0.4",
     "sjcl-aws": "^1.0.8",
-    "stellar-sdk": "^0.8.0",
+    "stellar-sdk": "^8.2.3",
     "webtask-tools": "^3.2.1"
   }
 }
